@@ -1,5 +1,6 @@
 import base64
 import os
+import random
 import sys
 from typing import Optional
 
@@ -69,11 +70,11 @@ async def get_dynamic_screenshot(url):
             '<span class="dyn-header__following__text">关注</span></div></div>',
             "",
         )  # 去掉关注按钮
-
+        font_list = ["TsangerShuYuanT", "站酷快乐体2016修订版"]
         content = content.replace(
             '<div class="dyn-card">',
             '<div class="dyn-card" '
-            'style="font-family: sans-serif; overflow-wrap: break-word;">',
+            'style="font-family:\'{}\', sans-serif; overflow-wrap: break-word;">'.format(random.choice(font_list)),
         )
         # 1. 字体问题：.dyn-class里font-family是PingFangSC-Regular，使用行内CSS覆盖掉它
         # 2. 换行问题：遇到太长的内容（长单词、某些长链接等）允许强制换行，防止溢出

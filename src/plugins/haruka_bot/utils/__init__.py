@@ -40,10 +40,10 @@ async def handle_uid(
     uid = command_arg.extract_plain_text().strip()
     if not uid:
         return
-    if uid.isdecimal():
+    if uid == "1485569" or uid == "35192025":
         state["uid"] = uid
     else:
-        await bot.send(event, "UID 必须为纯数字")
+        await bot.send(event, "baka, 只许关注鸽宝")
         raise FinishedException
 
 

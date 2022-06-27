@@ -77,8 +77,12 @@ async def dy_sched():
                 DynamicType.article: "发布了新专栏",
                 DynamicType.music: "发布了新音频",
             }
+            if name == "艾鸽泰尔德":
+                aige_name = "鸽宝"
+            else:
+                aige_name = name
             message = (
-                f"{name} "
+                f"{aige_name} "
                 + f"{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
                 + f"{url}\n"
                 + MessageSegment.image(f"base64://{image}")

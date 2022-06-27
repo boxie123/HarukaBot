@@ -31,6 +31,10 @@ async def live_sched():
         status[uid] = new_status
 
         name = info["uname"]
+        if name == "艾鸽泰尔德":
+            aige_name = "鸽宝"
+        else:
+            aige_name = name
         if new_status:  # 开播
             room_id = info["short_id"] if info["short_id"] else info["room_id"]
             url = "https://live.bilibili.com/" + str(room_id)
@@ -41,13 +45,16 @@ async def live_sched():
             logger.info(f"检测到开播：{name}（{uid}）")
 
             live_msg = (
-                f"{name} 正在直播：\n{title}\n" + MessageSegment.image(cover) + f"\n{url}"
+                f"{aige_name}开播啦：\n{title}\n" + MessageSegment.image(cover) + f"\n{url}"
             )
         else:  # 下播
             logger.info(f"检测到下播：{name}（{uid}）")
             if not config.haruka_live_off_notify:  # 没开下播推送
                 continue
-            live_msg = f"{name} 下播了"
+            bixin_path = "D:/save/hobby/code/py/HarukaBot-master/14.png"
+            live_msg = (
+                f"{aige_name}下锅啦\n" + MessageSegment.image(f"file:///{bixin_path}")
+            )
 
         # 推送
         push_list = await db.get_push_list(uid, "live")
