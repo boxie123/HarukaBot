@@ -16,78 +16,70 @@ def get_user_agents():
 
 
 headers = {
-        "User-Agent": get_user_agents(),
-        "Referer": "https://www.baidu.com/"
+    "User-Agent": get_user_agents(),
+    "Referer": "https://www.baidu.com/"
+}
+
+
+async def get_raw_resp(client: AsyncClient, is_holiday: bool = True, is_week: bool = True):
+    today = datetime.date.today()
+    url = "https://api.apihubs.cn/holiday/get"
+    rest_params = {
+        "order_by": 1,
+        "holiday" if is_holiday else "holiday_overtime": 99,
+        "cn": 1,
+        "size": 31
     }
+    if is_week:
+        rest_params["yearweek"] = today.strftime("%Y%W")
+    else:
+        rest_params["month"] = today.strftime("%Y%m")
+    resp = await client.request(method="get", url=url, params=rest_params, headers=headers)
+    resp.encoding = "utf-8"
+
+    return resp.json()
 
 
-async def getHoliday(result, client):
-    today = datetime.date.today()
-    curr_month = today.year * 100 + today.month
-    url = "https://api.apihubs.cn/holiday/get"
-    for month in (curr_month, curr_month + 1):
-        rest_params = {
-            "month": month,
-            "order_by": 1,
-            "holiday": 99,
-            "cn": 1,
-            "size": 31
-        }
-        resp = await client.request(method="get", url=url, params=rest_params, headers=headers)
-        resp.encoding = "utf-8"
-        rest_info = resp.json()
-        if rest_info["code"] != 0:
-            logger.error("日期api获取错误，请联系开发者")
-        holidays = rest_info["data"]["list"]
+def getHoliday(rest_info, result):
+    assert rest_info["code"] == 0
+    holidays = rest_info["data"]["list"]
 
-        for day in holidays:
-            name = day["holiday_cn"]
-            date = day["date_cn"]
-            rest = day["holiday_recess_cn"]
-            if name not in result:
-                if rest == "假期节假日":
-                    result[name] = {"放假日期：": [date]}
-                else:
-                    result[name] = {"本节日不放假，日期：": [date]}
+    for day in holidays:
+        name = day["holiday_cn"]
+        else_holiday = day["holiday_or_cn"]
+        if else_holiday != name:
+            name = ",".join((name, else_holiday))
+        date = day["date_cn"]
+        rest = day["holiday_recess_cn"]
+        if name not in result:
+            if rest == "假期节假日":
+                result[name] = {"放假日期：": [date]}
             else:
-                result[name]["放假日期："].append(date)
+                result[name] = {"本节日不放假，日期：": [date]}
+        else:
+            result[name]["放假日期："].append(date)
 
 
-async def getWorkday(result, client):
-    today = datetime.date.today()
-    curr_month = today.year * 100 + today.month
-    url = "https://api.apihubs.cn/holiday/get"
-    for month in (curr_month, curr_month + 1):
-        work_params = {
-            "month": month,
-            "order_by": 1,
-            "holiday_overtime": 99,
-            "cn": 1,
-            "size": 31
-        }
-        resp = await client.request(method="get", url=url, params=work_params, headers=headers)
-        resp.encoding = "utf-8"
-        work_info = resp.json()
-        if work_info["code"] != 0:
-            logger.error("日期api获取错误，请联系开发者")
-        workdays = work_info["data"]["list"]
+def getWorkday(work_info, result):
+    assert work_info["code"] == 0
+    workdays = work_info["data"]["list"]
 
-        for day in workdays:
-            name = day["holiday_overtime_cn"][:-2]
-            date = day["date_cn"]
-            if "调休工作日：" not in result[name]:
-                result[name]["调休工作日："] = [date]
-            else:
-                result[name]["调休工作日："].append(date)
+    for day in workdays:
+        name = day["holiday_overtime_cn"][:-2]
+        date = day["date_cn"]
+        if "调休工作日：" not in result[name]:
+            result[name]["调休工作日："] = [date]
+        else:
+            result[name]["调休工作日："].append(date)
 
 
-async def getInfo():
+async def getInfo(is_week: bool = True):
     result = {}
     today = datetime.date.today()
     async with AsyncClient() as client:
         try:
-            await getHoliday(result, client)
-            await getWorkday(result, client)
+            getHoliday(await get_raw_resp(client, is_week=is_week), result)
+            getWorkday(await get_raw_resp(client, is_holiday=False, is_week=is_week), result)
         except Exception:
             logger.error("获取节假日失败，请查看错误日志：")
             logger.error(traceback.format_exc())
@@ -138,4 +130,3 @@ def printImportantDay(curr_month):
                 message_list.append(date + "\n")
             message_list.append("\n")
     return message_list
-

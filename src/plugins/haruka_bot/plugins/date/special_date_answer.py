@@ -11,5 +11,5 @@ special_date_answer.__doc__ = """查询节假日"""
 
 @special_date_answer.handle()
 async def _(event: MessageEvent, state: T_State):
-    message_str = await getInfo()
-    await special_date_answer.finish(message_str)
+    message_str = await getInfo(False)
+    await special_date_answer.finish("本月节假日为：\n" + message_str)
