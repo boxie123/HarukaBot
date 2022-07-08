@@ -8,6 +8,7 @@ from . import (  # noqa: F401
     auto_agree,
     auto_delete,
     help,
+    date,
 )
 
 # TODO 将仅群可用指令的私聊拒绝部分分离成一个独立的handle
