@@ -1,4 +1,3 @@
-import asyncio
 from httpx import AsyncClient
 import datetime
 import random
@@ -22,7 +21,7 @@ class importantDate:
         self.do_rest = do_rest
         self.holidays = [first_date]
         self.workdays = []
-    
+
     # 转str函数，可直接获得整理好的结果
     # 示例：
     #   #劳动节
@@ -34,15 +33,15 @@ class importantDate:
     #   调休工作日：无
     def __str__(self):
         output = "#{}\n".format(self.name)
-        if (not self.do_rest):
+        if not self.do_rest:
             output += "本节日不放假，日期："
         else:
             output += "放假日期："
-        
+
         for date in self.holidays:
             output += "{}号，".format(str(date))
         output = output[:-1] + "\n"
-        
+
         output += "调休工作日："
         if len(self.workdays) != 0:
             for date in self.workdays:
@@ -50,7 +49,7 @@ class importantDate:
             output = output[:-1] + "\n"
         else:
             output += "无\n"
-            
+
         return output
 
 
@@ -77,15 +76,14 @@ class dateReminder:
                 importantDate("烈士纪念日", False, 30)],
             12: [importantDate("南京大屠杀纪念日", False, 13)]
         }
-        
+
         # 如果是按周查询，则result是{星期数(int)：”节日名，放假/不放假/调休“}
         # 如果是按月查询，则result是{“节日名”：importantDate}
         self.result = {}
 
-
     # 获取放假及调休信息（更新self.result并返回）
     async def getInfo(self):
-        async def getRawResp(client, is_holiday, is_week):
+        async def getRawResp(client: AsyncClient, is_holiday: bool, is_week: bool):
             url = "https://api.apihubs.cn/holiday/get"
             headers = {
                 "User-Agent": get_user_agents(),
@@ -105,17 +103,15 @@ class dateReminder:
             resp = await client.request(method="get", url=url, params=rest_params, headers=headers)
             resp.encoding = "utf-8"
             rest_info = resp.json()
-            if rest_info["code"] != 0:
-                raise Exception("日期api获取错误，请联系开发者")
+            assert rest_info["code"] == 0
 
-            return resp.json()
-        
-        # 从api获取raw reponse信息
+            return rest_info
+
+        # 从api获取raw response信息
         async with AsyncClient() as client:
-            is_holiday = True 
-            rest_info = await getRawResp(client, is_holiday, self.is_week)
-            work_info = await getRawResp(client, (not is_holiday), self.is_week)
-        
+            rest_info = await getRawResp(client, True, self.is_week)
+            work_info = await getRawResp(client, False, self.is_week)
+
         raw_holidays_info = rest_info["data"]["list"]
         raw_workday_info = work_info["data"]["list"]
 
@@ -125,10 +121,10 @@ class dateReminder:
             date = day["date"] % 100
             week = day["week"]
             rest = (day["holiday_recess_cn"] == "假期节假日")
-            if (self.is_week):
-                self.result[week] = "{}，{}".format(name, ("放假" if rest else "不放假"))                
+            if self.is_week:
+                self.result[week] = "{}，{}".format(name, ("放假" if rest else "不放假"))
             else:
-                if not name in self.result:
+                if name not in self.result:
                     self.result[name] = importantDate(name, rest, date)
                 else:
                     self.result[name].holidays.append(date)
@@ -138,7 +134,7 @@ class dateReminder:
             name = day["holiday_overtime_cn"][:-2]
             week = day["week"]
             date = day["date"] % 100
-            if (self.is_week):
+            if self.is_week:
                 self.result[week] = "{}调休".format(name)
             else:
                 # 如果有调休，那这个name一定是节假日且一定在result中
@@ -147,39 +143,38 @@ class dateReminder:
         # 加入特殊日期
         for month in self.special_dates:
             for day in self.special_dates[month]:
-                if (self.is_week):
-                    start = self.today - datetime.timedelta(self.today.weekday())       # 本周周一日期
-                    end = start + datetime.timedelta(7)                                 # 本周周日日期
+                if self.is_week:
+                    start = self.today - datetime.timedelta(self.today.weekday())  # 本周周一日期
+                    end = start + datetime.timedelta(7)  # 本周周日日期
                     format_day = datetime.date(self.today.year, month, day.holidays[0])
-                    if (format_day >= start and format_day <= end):                     # 查看day是否在本周期间
-                        week = format_day.weekday() + 1                                 # +1因为monday为0
+                    if start <= format_day <= end:  # 查看day是否在本周期间
+                        week = format_day.weekday() + 1  # +1因为monday为0
                         self.result[week] = "{}，{}".format(day.name, ("放假" if day.do_rest else "不放假"))
                 else:
-                    if (self.today.month == month):
+                    if self.today.month == month:
                         self.result[day.name] = day
- 
-        return self.result
 
+        return self.result
 
     # 将self.result用文本格式化后输出str
     async def outputStr(self):
         await self.getInfo()
         output = ""
 
-        if (self.is_week): 
-            if (len(self.result) == 0): return "本周无重要日期\n"
+        if self.is_week:
+            if len(self.result) == 0:
+                return "本周无重要日期\n"
             week_num_to_str = {
                 1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五", 6: "周六", 7: "周日"
-            } 
+            }
             monday = self.today - datetime.timedelta(self.today.weekday())
             output = "本周（从{}月{}号周一开始）重要日期提醒:\n".format(monday.month, monday.day)
             for week in self.result:
                 output += "{}：{}\n".format(week_num_to_str[week], self.result[week])
-        else: 
-            if (len(self.result) == 0): return "本月无重要日期\n"
+        else:
+            if len(self.result) == 0:
+                return "本月无重要日期\n"
             for day in self.result:
                 output += (str(self.result[day]) + '\n')
 
         return output
-
-
