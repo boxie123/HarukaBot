@@ -2,12 +2,8 @@ from ...utils import safe_send, scheduler, dateReminder
 from nonebot.log import logger
 
 
-@scheduler.scheduled_job(
-    # "cron", day_of_week=0, hour=0, minute=random.randint(0, 10), second=0, id="special_date_sched",
-    "cron", day_of_week=5, hour=15, minute=34, second=30, id="special_date_sched",
-)
-async def sd_sched():
-    data_item = dateReminder(is_week=True)
+async def sd_sched(is_week : bool = True):
+    data_item = dateReminder(is_week=is_week)
     message_str = await data_item.outputStr()
     push_list = [
         {"type": "private", "type_id": 1824390830},
@@ -21,7 +17,15 @@ async def sd_sched():
             bot_id=1031515006,
             send_type=push["type"],
             type_id=push["type_id"],
-            message=message_str,
+            message="定时温馨提醒：\n" + message_str,
             at=False,
         )
 
+scheduler.add_job(
+    # sd_sched, "cron", args=(True,), day_of_week=0, hour=0, minute=3, second=0, id="special_date_sched_week",
+    sd_sched, "cron", args=(True,), day_of_week=5, hour=16, minute=8, second=30, id="special_date_sched_week",
+)
+scheduler.add_job(
+    # sd_sched, "cron", args=(False,), day=0, hour=0, minute=3, second=0, id="special_date_sched_month",
+    sd_sched, "cron", args=(False,), day_of_week=5, hour=16, minute=9, second=0, id="special_date_sched_month",
+)
