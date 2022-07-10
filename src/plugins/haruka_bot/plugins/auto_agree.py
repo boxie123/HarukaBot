@@ -27,8 +27,19 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
         else:
             await safe_send(
                 bot_id=bot.self_id,
-                send_type="private",
-                type_id=1824390830,
-                message="加群申请提醒：\n" + event.comment,
+                send_type="group",
+                type_id=970612953,
+                message=f"舰长群加群申请提醒：\n申请人QQ号：{event.user_id}\n申请内容：{event.comment}",
+                at=False
+            )
+    elif event.sub_type == "add" and event.group_id == 1054608979:
+        if re.match("宠鸽会", event.comment):
+            await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=True)
+        else:
+            await safe_send(
+                bot_id=bot.self_id,
+                send_type="group",
+                type_id=970612953,
+                message=f"饭堂群加群申请提醒：\n申请人QQ号：{event.user_id}\n申请内容：{event.comment}",
                 at=False
             )
