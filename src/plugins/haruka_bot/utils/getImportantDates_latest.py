@@ -58,7 +58,7 @@ class importantDate:
 #   item = dateReminder(is_week=True)   创建实例，按周查询
 #   print(item.outputStr())             获取查询结果str
 class dateReminder:
-    def __init__(self, is_week):
+    def __init__(self, is_week: bool):
         # 查询时的日期
         self.today = datetime.date.today()
 
@@ -157,7 +157,7 @@ class dateReminder:
         return self.result
 
     # 将self.result用文本格式化后输出str
-    async def outputStr(self):
+    async def outputStr(self) -> str:
         await self.getInfo()
         output = ""
 

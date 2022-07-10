@@ -19,7 +19,6 @@ async def sd_sched(is_week: bool = True):
 
     push_list = await db.get_date_list()
     for sets in push_list:
-        logger.info("定时任务 special_date_sched 执行，发送消息给{}".format(sets.type_id))
         await safe_send(
             bot_id=sets.bot_id,
             send_type=sets.type,
@@ -27,6 +26,7 @@ async def sd_sched(is_week: bool = True):
             message="定时温馨提醒：\n" + message,
             at=False
         )
+        logger.success(f"向 {sets.type} {sets.type_id} 发送节假日定时提醒")
 
 scheduler.add_job(
     sd_sched, "cron", args=(True,), day_of_week=0, hour=0, minute=3, second=0, id="special_date_sched_week",

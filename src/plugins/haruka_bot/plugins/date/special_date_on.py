@@ -1,6 +1,5 @@
 from nonebot import on_command
 from nonebot.adapters.onebot.v11.event import MessageEvent
-from nonebot.typing import T_State
 
 from ...database import DB as db
 from ...utils import get_type_id, permission_check, to_me
@@ -12,7 +11,7 @@ special_date_on.handle()(permission_check)
 
 
 @special_date_on.handle()
-async def _(event: MessageEvent, state: T_State):
+async def _(event: MessageEvent):
     """订阅节假日提醒"""
     result = await db.add_date(
         type=event.message_type,
@@ -20,5 +19,5 @@ async def _(event: MessageEvent, state: T_State):
         bot_id=event.self_id,
     )
     if result:
-        await special_date_on.finish(f"已订阅节假日提醒")
-    await special_date_on.finish(f"已经订阅过了")
+        await special_date_on.finish("已订阅节假日提醒")
+    await special_date_on.finish("已经订阅过了")
