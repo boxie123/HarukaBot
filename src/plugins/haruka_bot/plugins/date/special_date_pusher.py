@@ -11,6 +11,8 @@ async def sd_sched(is_week: bool = True):
     try:
         data_item = dateReminder(is_week=is_week)
         message = await data_item.outputStr()
+        if not is_week:
+            message = "本月节假日为：\n" + message
     except Exception:
         logger.error("获取节假日信息失败，以下为错误日志：")
         logger.error(traceback.format_exc())
