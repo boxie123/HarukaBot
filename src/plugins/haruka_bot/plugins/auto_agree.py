@@ -29,7 +29,7 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
                 bot_id=bot.self_id,
                 send_type="group",
                 type_id=970612953,
-                message=f"舰长群加群申请提醒：\n申请人QQ号：{event.user_id}\n申请内容：{event.comment}",
+                message=f"舰长群加群申请提醒：\n申请人QQ号：{event.user_id}\n{event.comment}",
                 at=False
             )
     elif event.sub_type == "add" and event.group_id == 1054608979:
@@ -40,6 +40,6 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
                 bot_id=bot.self_id,
                 send_type="group",
                 type_id=970612953,
-                message=f"饭堂群加群申请提醒：\n申请人QQ号：{event.user_id}\n申请内容：{event.comment}",
+                message=f"饭堂群加群申请提醒：\n申请人QQ号：{event.user_id}\n{event.comment}",
                 at=False
             )
