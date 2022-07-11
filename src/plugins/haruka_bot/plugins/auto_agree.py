@@ -22,7 +22,7 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
     if event.sub_type == "invite" and str(event.user_id) in bot.config.superusers:
         await bot.set_group_add_request(flag=event.flag, sub_type="invite", approve=True)
     elif event.sub_type == "add" and event.group_id == 1065614825:
-        if re.match("艾鸽鸽冲鸭", event.comment):
+        if re.search("艾鸽鸽冲鸭", event.comment):
             await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=True)
         else:
             await safe_send(
@@ -33,7 +33,7 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
                 at=False
             )
     elif event.sub_type == "add" and event.group_id == 1054608979:
-        if re.match("宠鸽会", event.comment):
+        if re.search("宠鸽会", event.comment):
             await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=True)
         else:
             await safe_send(
