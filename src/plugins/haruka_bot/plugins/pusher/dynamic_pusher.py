@@ -82,7 +82,7 @@ async def dy_sched():
             else:
                 aige_name = name
             message = (
-                f"{aige_name} "
+                f"{aige_name}"
                 + f"{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
                 + f"{url}\n"
                 + MessageSegment.image(f"base64://{image}")

@@ -256,7 +256,7 @@ class DB:
         return True
 
     @classmethod
-    async def get_date_list(cls, **kwargs) -> List[Date]:
+    async def get_date_list(cls, **kwargs):
         """获取需要推送的节假日提醒列表"""
         return await Date.get(**kwargs)
 
