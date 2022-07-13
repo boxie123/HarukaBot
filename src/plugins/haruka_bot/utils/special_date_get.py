@@ -1,4 +1,3 @@
-import asyncio
 from httpx import AsyncClient
 import datetime
 import random
@@ -88,7 +87,7 @@ async def get_raw_list(is_week: bool,
 
 class Week:
     @classmethod
-    async def add_special_date_week(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
+    async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
         days_num = (end - start).days
         for i in range(days_num + 1):
@@ -100,7 +99,7 @@ class Week:
         return result
 
     @classmethod
-    async def raw_list_to_dict_week(cls, raw_holidays_info, raw_workday_info) -> dict:
+    async def raw_list_to_dict(cls, raw_holidays_info, raw_workday_info) -> dict:
         """处理一周的信息列表"""
         result = {i: [] for i in range(1, 8)}
         today = datetime.date.today()
@@ -123,12 +122,12 @@ class Week:
             week = day["week"]
             result[week].append(f"{name}调休")
 
-        result = await cls.add_special_date_week(result, start, end)
+        result = await cls.add_special_date(result, start, end)
 
         return result
 
     @classmethod
-    async def output_str_week(cls, result: dict) -> str:
+    async def output_str(cls, result: dict) -> str:
         """生成每周的消息 str"""
         today = datetime.date.today()
         if len(result) == 0:
@@ -152,7 +151,7 @@ class Week:
 
 class Month:
     @classmethod
-    async def add_special_date_month(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
+    async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
         days_num = (end - start).days
         for i in range(days_num + 1):
@@ -164,7 +163,7 @@ class Month:
         return result
 
     @classmethod
-    async def raw_list_to_dict_month(cls, raw_holidays_info, raw_workday_info, month) -> dict:
+    async def raw_list_to_dict(cls, raw_holidays_info, raw_workday_info, month) -> dict:
         """处理一个月的信息列表"""
         result = {}
         for day in raw_holidays_info:
@@ -197,12 +196,12 @@ class Month:
         next_month = start.replace(day=28) + datetime.timedelta(days=4)
         end = next_month - datetime.timedelta(days=next_month.day)
 
-        result = await Month.add_special_date_month(result, start, end)
+        result = await cls.add_special_date(result, start, end)
 
         return result
 
     @classmethod
-    async def output_str_month(cls, result: dict) -> str:
+    async def output_str(cls, result: dict) -> str:
         """生成每月的消息 str"""
         output = "本月节假日为：\n"
         if len(result) == 0:
@@ -234,8 +233,8 @@ class Month:
 async def get_special_date(is_week: bool, month: str = datetime.date.today().strftime("%Y%m"),):
     """main 函数，生成节假日提醒消息"""
     if is_week:
-        result = await Week.raw_list_to_dict_week(*await get_raw_list(is_week, month))
-        return await Week.output_str_week(result)
+        result = await Week.raw_list_to_dict(*await get_raw_list(is_week, month))
+        return await Week.output_str(result)
     else:
-        result = await Month.raw_list_to_dict_month(*await get_raw_list(is_week, month), month)
-        return await Month.output_str_month(result)
+        result = await Month.raw_list_to_dict(*await get_raw_list(is_week, month), month)
+        return await Month.output_str(result)
