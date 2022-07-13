@@ -141,4 +141,4 @@ PROXIES = {"all://": config.haruka_proxy}
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
 from .browser import get_dynamic_screenshot  # noqa
-from .getImportantDates_latest import dateReminder   # noqa
+from .special_date_get import get_special_date   # noqa

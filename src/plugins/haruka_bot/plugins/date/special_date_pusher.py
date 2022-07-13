@@ -1,7 +1,7 @@
 import traceback
 
 from ...database import DB as db
-from ...utils import safe_send, scheduler, dateReminder
+from ...utils import safe_send, scheduler, get_special_date
 
 from nonebot.log import logger
 
@@ -9,10 +9,7 @@ from nonebot.log import logger
 async def sd_sched(is_week: bool = True):
     message = "获取节假日失败，请联系铂屑"
     try:
-        data_item = dateReminder(is_week=is_week)
-        message = await data_item.outputStr()
-        if not is_week:
-            message = "本月节假日为：\n" + message
+        message = await get_special_date(is_week)
     except Exception:
         logger.error("获取节假日信息失败，以下为错误日志：")
         logger.error(traceback.format_exc())
