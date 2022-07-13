@@ -1,3 +1,4 @@
+import asyncio
 from httpx import AsyncClient
 import datetime
 import random
@@ -86,6 +87,7 @@ async def get_raw_list(is_week: bool,
 
 
 class Week:
+    """按周查询"""
     @classmethod
     async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
@@ -150,6 +152,7 @@ class Week:
 
 
 class Month:
+    """按月查询"""
     @classmethod
     async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
@@ -238,3 +241,7 @@ async def get_special_date(is_week: bool, month: str = datetime.date.today().str
     else:
         result = await Month.raw_list_to_dict(*await get_raw_list(is_week, month), month)
         return await Month.output_str(result)
+
+
+# if __name__ == "__main__":
+#     print(asyncio.run(get_special_date(False, "202209")))
