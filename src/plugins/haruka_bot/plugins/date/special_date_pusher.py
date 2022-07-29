@@ -27,7 +27,7 @@ async def sd_sched(is_week: bool = True):
 
 scheduler.add_job(
     sd_sched, "cron", args=(True,), day_of_week=0, hour=0, minute=3, second=0, id="special_date_sched_week",
-    # sd_sched, "cron", args=(True,), day_of_week=6, hour=1, minute=39, second=0, id="special_date_sched_week",
+    # sd_sched, "cron", args=(True,), day_of_week=4, hour=19, minute=52, second=30, id="special_date_sched_week",
 )
 scheduler.add_job(
     sd_sched, "cron", args=(False,), day=1, hour=0, minute=3, second=0, id="special_date_sched_month",

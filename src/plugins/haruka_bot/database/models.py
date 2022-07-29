@@ -74,6 +74,11 @@ class Date(BaseModel):
     bot_id = IntField()
 
 
+class Special(BaseModel):
+    name = CharField(max_length=30)
+    month = IntField()
+    day = IntField()
+
 # class Login(BaseModel):
 #     uid = IntField(pk=True)
 #     data = JSONField()

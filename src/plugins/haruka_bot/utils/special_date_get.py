@@ -1,19 +1,37 @@
-import asyncio
 from httpx import AsyncClient
 import datetime
 import random
+from ..database import DB as db
 
-special_dates = {
-    5: {12: "汶川大地震纪念日"},
-    6: {4: "服务器维护"},
-    7: {7: "七七事变"},
-    9: {3: "抗日战争胜利纪念日",
-        7: "鸽宝生日",
-        18: "九一八事变",
-        30: "烈士纪念日", },
-    11: {15: "鸽宝周年"},
-    12: {13: "南京大屠杀纪念日"},
-}
+special_dates = {}
+special_dates: {int: {int: set[str]}}
+
+
+async def special_dates_update():
+    empty_dict = {i: {} for i in range(1, 13)}
+    special_dates.update(empty_dict)
+    special_dates.update({
+        5: {12: {"汶川大地震纪念日"}},
+        6: {4: {"服务器维护"}},
+        7: {7: {"七七事变"}},
+        9: {3: {"抗日战争胜利纪念日"},
+            7: {"鸽宝生日"},
+            18: {"九一八事变"},
+            30: {"烈士纪念日"}, },
+        11: {15: {"鸽宝周年"}},
+        12: {13: {"南京大屠杀纪念日"}},
+    })
+    special_list = await db.get_special_list()
+    for special_day in special_list:
+        month = special_day.month
+        day = special_day.day
+        name = special_day.name
+        if month in special_dates and day in special_dates[month]:
+            special_dates[month][day].add(name)
+        elif month in special_dates:
+            special_dates[month][day] = {name, }
+        else:
+            special_dates[month] = {day: {name, }}
 
 
 def get_user_agents():
@@ -76,7 +94,7 @@ async def get_raw_resp(
 
 
 async def get_raw_list(is_week: bool,
-                       month: str,):
+                       month: str, ):
     """获取假期列表和调休列表"""
     params = await get_params_(is_week, month)
     async with AsyncClient() as client:
@@ -88,6 +106,7 @@ async def get_raw_list(is_week: bool,
 
 class Week:
     """按周查询"""
+
     @classmethod
     async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
@@ -96,7 +115,8 @@ class Week:
             day = start + datetime.timedelta(i)
             if (day.month in special_dates) and (day.day in special_dates[day.month]):
                 week = day.weekday() + 1  # +1因为monday为0
-                result[week].append(f"{special_dates[day.month][day.day]}，不放假")
+                for day_name in special_dates[day.month][day.day]:
+                    result[week].append(f"{day_name}，不放假")
 
         return result
 
@@ -141,7 +161,8 @@ class Week:
         output = ""
         for week in result:
             if result[week]:
-                output += "{}：{}\n".format(week_num_to_str[week], result[week])
+                info = "、".join(result[week])
+                output += "{}：{}\n".format(week_num_to_str[week], info)
 
         if not output:
             return "本周无重要日期\n"
@@ -153,6 +174,7 @@ class Week:
 
 class Month:
     """按月查询"""
+
     @classmethod
     async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
         """加入 api 没有的特殊日期"""
@@ -160,8 +182,8 @@ class Month:
         for i in range(days_num + 1):
             day = start + datetime.timedelta(i)
             if (day.month in special_dates) and (day.day in special_dates[day.month]):
-                name = special_dates[day.month][day.day]
-                result[name] = {"rest": False, "date": [day.day], "overtime_date": []}
+                for name in special_dates[day.month][day.day]:
+                    result[name] = {"rest": False, "date": [day.day], "overtime_date": []}
 
         return result
 
@@ -233,15 +255,12 @@ class Month:
         return output
 
 
-async def get_special_date(is_week: bool, month: str = datetime.date.today().strftime("%Y%m"),):
+async def get_special_date(is_week: bool, month: str = datetime.date.today().strftime("%Y%m"), ):
     """main 函数，生成节假日提醒消息"""
+    await special_dates_update()
     if is_week:
         result = await Week.raw_list_to_dict(*await get_raw_list(is_week, month))
         return await Week.output_str(result)
     else:
         result = await Month.raw_list_to_dict(*await get_raw_list(is_week, month), month)
         return await Month.output_str(result)
-
-
-# if __name__ == "__main__":
-#     print(asyncio.run(get_special_date(False, "202209")))
