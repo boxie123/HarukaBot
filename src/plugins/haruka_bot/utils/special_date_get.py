@@ -255,8 +255,12 @@ class Month:
         return output
 
 
-async def get_special_date(is_week: bool, month: str = datetime.date.today().strftime("%Y%m"), ):
+async def get_special_date(is_week: bool, **kwargs):
     """main 函数，生成节假日提醒消息"""
+    if "month" in kwargs:
+        month = kwargs["month"]
+    else:
+        month = datetime.date.today().strftime("%Y%m")
     await special_dates_update()
     if is_week:
         result = await Week.raw_list_to_dict(*await get_raw_list(is_week, month))
