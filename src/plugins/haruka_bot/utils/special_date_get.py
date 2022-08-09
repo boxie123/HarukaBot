@@ -4,7 +4,7 @@ import random
 from ..database import DB as db
 
 special_dates = {}
-special_dates: {int: {int: set[str]}}
+special_dates: dict[int, dict[int, set[str]]]
 
 
 async def special_dates_update():
