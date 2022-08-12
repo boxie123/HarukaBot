@@ -20,7 +20,9 @@ group_invite = on_request(priority=5)
 @group_invite.handle()
 async def group_agree(bot: Bot, event: GroupRequestEvent):
     if event.sub_type == "invite" and str(event.user_id) in bot.config.superusers:
-        await bot.set_group_add_request(flag=event.flag, sub_type="invite", approve=True)
+        await bot.set_group_add_request(
+            flag=event.flag, sub_type="invite", approve=True
+        )
     elif event.sub_type == "add" and event.group_id == 1065614825:
         if re.search("艾鸽鸽冲鸭", event.comment):
             await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=True)

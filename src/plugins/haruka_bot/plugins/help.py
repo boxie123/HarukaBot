@@ -8,7 +8,7 @@ help = on_command("帮助", rule=to_me(), priority=5)
 
 
 @help.handle()
-async def test():
+async def _():
     message = "目前支持的功能：\n"
     for matchers_list in matchers.values():
         for matcher in matchers_list:
