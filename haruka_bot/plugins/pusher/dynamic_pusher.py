@@ -85,10 +85,9 @@ async def dy_sched():
             else:
                 aige_name = name
             message = (
-                f"{aige_name}"
-                f"{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
-                f"{MessageSegment.image(image)}\n"
-                f"{url}"
+                f"{aige_name}{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
+                + MessageSegment.image(image)
+                + f"\n{url}"
             )
 
             push_list = await db.get_push_list(uid, "dynamic")
