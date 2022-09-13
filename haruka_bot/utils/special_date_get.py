@@ -1,6 +1,8 @@
-from httpx import AsyncClient
 import datetime
 import random
+
+from httpx import AsyncClient
+
 from ..database import DB as db
 
 special_dates = {}
@@ -10,17 +12,21 @@ special_dates: dict[int, dict[int, set[str]]]
 async def special_dates_update():
     empty_dict = {i: {} for i in range(1, 13)}
     special_dates.update(empty_dict)
-    special_dates.update({
-        5: {12: {"汶川大地震纪念日"}},
-        6: {4: {"服务器维护"}},
-        7: {7: {"七七事变"}},
-        9: {3: {"抗日战争胜利纪念日"},
-            7: {"鸽宝生日"},
-            18: {"九一八事变"},
-            30: {"烈士纪念日"}, },
-        11: {15: {"鸽宝周年"}},
-        12: {13: {"南京大屠杀纪念日"}},
-    })
+    special_dates.update(
+        {
+            5: {12: {"汶川大地震纪念日"}},
+            6: {4: {"服务器维护"}},
+            7: {7: {"七七事变"}},
+            9: {
+                3: {"抗日战争胜利纪念日"},
+                7: {"鸽宝生日"},
+                18: {"九一八事变"},
+                30: {"烈士纪念日"},
+            },
+            11: {15: {"鸽宝周年"}},
+            12: {13: {"南京大屠杀纪念日"}},
+        }
+    )
     special_list = await db.get_special_list()
     for special_day in special_list:
         month = special_day.month
@@ -29,9 +35,15 @@ async def special_dates_update():
         if month in special_dates and day in special_dates[month]:
             special_dates[month][day].add(name)
         elif month in special_dates:
-            special_dates[month][day] = {name, }
+            special_dates[month][day] = {
+                name,
+            }
         else:
-            special_dates[month] = {day: {name, }}
+            special_dates[month] = {
+                day: {
+                    name,
+                }
+            }
 
 
 def get_user_agents():
@@ -39,15 +51,15 @@ def get_user_agents():
     agent = [
         "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 "
-        "Safari/537.36"
+        "Safari/537.36",
     ]
     return random.choice(agent)
 
 
 async def get_params(
-        is_holiday: bool,
-        is_week: bool,
-        month: str,
+    is_holiday: bool,
+    is_week: bool,
+    month: str,
 ):
     """生成 params"""
     today = datetime.date.today()
@@ -55,7 +67,7 @@ async def get_params(
         "order_by": 1,
         "holiday" if is_holiday else "holiday_overtime": 99,
         "cn": 1,
-        "size": 31
+        "size": 31,
     }
     if is_week:
         params["yearweek"] = today.strftime("%Y%W")
@@ -66,8 +78,8 @@ async def get_params(
 
 
 async def get_params_(
-        is_week: bool,
-        month: str,
+    is_week: bool,
+    month: str,
 ):
     """生成假期和调休两种 params"""
     rest_params = await get_params(is_holiday=True, is_week=is_week, month=month)
@@ -76,15 +88,12 @@ async def get_params_(
 
 
 async def get_raw_resp(
-        client: AsyncClient,
-        params: dict,
+    client: AsyncClient,
+    params: dict,
 ):
     """根据参数返回信息列表"""
     url = "https://api.apihubs.cn/holiday/get"
-    headers = {
-        "User-Agent": get_user_agents(),
-        "Referer": "https://www.baidu.com/"
-    }
+    headers = {"User-Agent": get_user_agents(), "Referer": "https://www.baidu.com/"}
     resp = await client.request(method="get", url=url, params=params, headers=headers)
     resp.encoding = "utf-8"
     rest_info = resp.json()
@@ -93,8 +102,10 @@ async def get_raw_resp(
     return rest_info["data"]["list"]
 
 
-async def get_raw_list(is_week: bool,
-                       month: str, ):
+async def get_raw_list(
+    is_week: bool,
+    month: str,
+):
     """获取假期列表和调休列表"""
     params = await get_params_(is_week, month)
     async with AsyncClient() as client:
@@ -108,7 +119,9 @@ class Week:
     """按周查询"""
 
     @classmethod
-    async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
+    async def add_special_date(
+        cls, result: dict, start: datetime.date, end: datetime.date
+    ) -> dict:
         """加入 api 没有的特殊日期"""
         days_num = (end - start).days
         for i in range(days_num + 1):
@@ -132,9 +145,9 @@ class Week:
             name = day["holiday_cn"]
             or_name = day["holiday_or_cn"]
             week = day["week"]
-            rest = (day["holiday_recess"] == 1)
+            rest = day["holiday_recess"] == 1
             if or_name != name:
-                name += ("，" + or_name)
+                name += "，" + or_name
 
             result[week].append("{}，{}".format(name, ("放假" if rest else "不放假")))
 
@@ -155,7 +168,13 @@ class Week:
         if len(result) == 0:
             return "本周无重要日期\n"
         week_num_to_str = {
-            1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五", 6: "周六", 7: "周日"
+            1: "周一",
+            2: "周二",
+            3: "周三",
+            4: "周四",
+            5: "周五",
+            6: "周六",
+            7: "周日",
         }
         monday = today - datetime.timedelta(today.weekday())
         output = ""
@@ -167,7 +186,9 @@ class Week:
         if not output:
             return "本周无重要日期\n"
         else:
-            output = "本周（从{}月{}号周一开始）重要日期提醒:\n".format(monday.month, monday.day) + output
+            output = (
+                "本周（从{}月{}号周一开始）重要日期提醒:\n".format(monday.month, monday.day) + output
+            )
 
         return output
 
@@ -176,14 +197,20 @@ class Month:
     """按月查询"""
 
     @classmethod
-    async def add_special_date(cls, result: dict, start: datetime.date, end: datetime.date) -> dict:
+    async def add_special_date(
+        cls, result: dict, start: datetime.date, end: datetime.date
+    ) -> dict:
         """加入 api 没有的特殊日期"""
         days_num = (end - start).days
         for i in range(days_num + 1):
             day = start + datetime.timedelta(i)
             if (day.month in special_dates) and (day.day in special_dates[day.month]):
                 for name in special_dates[day.month][day.day]:
-                    result[name] = {"rest": False, "date": [day.day], "overtime_date": []}
+                    result[name] = {
+                        "rest": False,
+                        "date": [day.day],
+                        "overtime_date": [],
+                    }
 
         return result
 
@@ -195,7 +222,7 @@ class Month:
             name = day["holiday_cn"]
             or_name = day["holiday_or_cn"]
             date = day["date"] % 100
-            rest = (day["holiday_recess"] == 1)
+            rest = day["holiday_recess"] == 1
 
             if name not in result:
                 result[name] = {"rest": rest, "date": [date], "overtime_date": []}
@@ -204,7 +231,11 @@ class Month:
 
             if or_name != name:
                 if or_name not in result:
-                    result[or_name] = {"rest": rest, "date": [date], "overtime_date": []}
+                    result[or_name] = {
+                        "rest": rest,
+                        "date": [date],
+                        "overtime_date": [],
+                    }
                 else:
                     result[or_name]["date"].append(date)
 
@@ -228,11 +259,16 @@ class Month:
     @classmethod
     async def output_str(cls, result: dict) -> str:
         """生成每月的消息 str"""
+        result = sorted(
+            result.items(),
+            key=lambda x: x[1]["date"][0]
+            if len(x[1]["date"]) > 0
+            else x[1]["overtime_date"][0],
+        )
         output = "本月节假日为：\n"
         if len(result) == 0:
             return "本月无重要日期\n"
-        for name in result:
-            day = result[name]
+        for name, day in result:
             output += "#{}\n".format(name)
             if len(day["date"]) == 0:
                 output += "本节日放假日期不在查询范围中\n"
@@ -266,5 +302,7 @@ async def get_special_date(is_week: bool, **kwargs):
         result = await Week.raw_list_to_dict(*await get_raw_list(is_week, month))
         return await Week.output_str(result)
     else:
-        result = await Month.raw_list_to_dict(*await get_raw_list(is_week, month), month)
+        result = await Month.raw_list_to_dict(
+            *await get_raw_list(is_week, month), month
+        )
         return await Month.output_str(result)
