@@ -28,9 +28,9 @@ async def _(state: T_State):
     message = "获取节假日失败，请联系铂屑"
     try:
         if "month" in state:
-            message = await get_special_date(is_week=False, month=state["month"])
+            message = await get_special_date(mode="month", month=state["month"])
         else:
-            message = await get_special_date(is_week=False)
+            message = await get_special_date(mode="month")
     except Exception:
         logger.error("获取节假日信息失败，以下为错误日志：")
         logger.error(traceback.format_exc())
