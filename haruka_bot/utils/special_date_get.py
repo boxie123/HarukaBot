@@ -312,7 +312,7 @@ class Day:
     async def raw_list_to_dict(
         cls, raw_holidays_info, raw_workday_info
     ) -> dict[int, list[str]]:
-        """处理一周的信息列表"""
+        """处理当天的信息列表"""
         result = {i: [] for i in range(1, 8)}
         # 获取放假信息
         for day in raw_holidays_info:
@@ -337,7 +337,7 @@ class Day:
 
     @classmethod
     async def output_str(cls, result: dict[int, list[str]]) -> str:
-        """生成每周的消息 str"""
+        """生成每日的消息 str"""
         today = datetime.date.today()
         week_num_to_str = {
             1: "周一",
