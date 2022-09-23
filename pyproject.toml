@@ -28,7 +28,7 @@ playwright = "^1.22.0"
 pydantic = "^1.9.0"
 python-dotenv = "^0.19.2"
 tortoise-orm = {extras = ["asyncpg"], version = "^0.18.1"}
-aerich = "^0.6.2"
+aerich = ">=0.6.2,<0.8.0"
 bilireq = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
