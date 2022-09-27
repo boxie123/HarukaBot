@@ -7,6 +7,8 @@ from ..utils import safe_send
 
 friend_req = on_request(priority=5)
 
+liar_list = [3529146676, 702363229, ]
+
 
 @friend_req.handle()
 async def friend_agree(bot: Bot, event: FriendRequestEvent):
@@ -35,7 +37,16 @@ async def group_agree(bot: Bot, event: GroupRequestEvent):
                 at=False
             )
     elif event.sub_type == "add" and event.group_id == 1054608979:
-        if re.search("宠鸽会", event.comment):
+        if event.user_id in liar_list:
+            await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=False)
+            await safe_send(
+                bot_id=bot.self_id,
+                send_type="group",
+                type_id=970612953,
+                message=f"饭堂群加群申请提醒：\n申请人QQ号：{event.user_id}\n{event.comment}\nQQ号在诈骗列表中，已自动拒绝",
+                at=False
+            )
+        elif re.search("宠鸽会", event.comment):
             await bot.set_group_add_request(flag=event.flag, sub_type="add", approve=True)
         else:
             await safe_send(
