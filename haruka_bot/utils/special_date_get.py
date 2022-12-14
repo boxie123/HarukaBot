@@ -23,8 +23,10 @@ async def special_dates_update():
                 18: {"九一八事变"},
                 30: {"烈士纪念日"},
             },
-            11: {15: {"鸽宝周年"}},
-            12: {13: {"南京大屠杀纪念日"}},
+            12: {
+                9: {"鸽宝周年"},
+                13: {"南京大屠杀公祭日"},
+            },
         }
     )
     special_list = await db.get_special_list()
