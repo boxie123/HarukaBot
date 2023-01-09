@@ -37,7 +37,7 @@ scheduler.add_job(
     sd_sched, "cron", args=("month",), day=1, hour=0, minute=3, second=0, id="special_date_sched_month",
     # sd_sched, "cron", args=(False,), day=10, hour=1, minute=39, second=30, id="special_date_sched_month",
 )
-scheduler.add_job(
-    sd_sched, "cron", args=("day",), hour=0, minute=3, second=0, id="special_date_sched_day",
-    # sd_sched, "cron", args=("day",), hour=1, minute=39, second=30, id="special_date_sched_day",
-)
+# scheduler.add_job(
+#     sd_sched, "cron", args=("day",), hour=0, minute=3, second=0, id="special_date_sched_day",
+#     # sd_sched, "cron", args=("day",), hour=1, minute=39, second=30, id="special_date_sched_day",
+# )
