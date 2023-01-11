@@ -57,7 +57,7 @@ async function getMobileStyle() {
     // 设置字体格式
     const cardDom = document.querySelector(".dyn-card");
     if (cardDom) {
-        cardDom.style.fontFamily = "Noto Sans CJK SC, sans-serif";
+        cardDom.style.fontFamily = "站酷快乐体2016修订版, Noto Sans CJK SC, sans-serif";
         cardDom.style.overflowWrap = "break-word";
     }
 
