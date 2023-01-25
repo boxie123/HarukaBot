@@ -1,7 +1,9 @@
+import asyncio
 import os
+import re
 import sys
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from nonebot import get_driver
 from nonebot.log import logger
@@ -9,9 +11,10 @@ from playwright.__main__ import main
 from playwright.async_api import Browser, async_playwright
 
 from .. import config
+from .fonts_provider import fill_font
 
 _browser: Optional[Browser] = None
-mobile_js = Path(__file__).parent.joinpath("mobile.js").read_text(encoding="utf-8")
+mobile_js = Path(__file__).parent.joinpath("mobile.js")
 
 
 async def init_browser(proxy=config.haruka_proxy, **kwargs) -> Browser:
@@ -24,6 +27,7 @@ async def init_browser(proxy=config.haruka_proxy, **kwargs) -> Browser:
 
 
 async def get_browser() -> Browser:
+    # TODO 重启浏览器
     assert _browser
     return _browser
 
@@ -49,6 +53,7 @@ async def get_dynamic_screenshot_mobile(dynamic_id):
         viewport={"width": 460, "height": 780},
     )
     try:
+        await page.route(re.compile("^https://static.graiax/fonts/(.+)$"), fill_font)
         await page.goto(url, wait_until="networkidle", timeout=10000)
         # 动态被删除或者进审核了
         if page.url == "https://m.bilibili.com/404":
@@ -64,12 +69,30 @@ async def get_dynamic_screenshot_mobile(dynamic_id):
         #     "dyn.style.fontFamily='站酷快乐体2016修订版, Noto Sans CJK SC, sans-serif';"
         #     "dyn.style.overflowWrap='break-word'"
         # )
-        await page.add_script_tag(content=mobile_js)
+        await page.add_script_tag(path=mobile_js)
+
+        await page.evaluate(
+            f'setFont("{config.haruka_dynamic_font}", '
+            f'"{config.haruka_dynamic_font_source}")'
+            if config.haruka_dynamic_font
+            else "setFont()"
+        )
         await page.wait_for_function("getMobileStyle()")
+
         await page.wait_for_load_state("networkidle")
         await page.wait_for_load_state("domcontentloaded")
 
-        card = await page.query_selector(".opus-modules" if "opus" in page.url else ".dyn-card")
+        await page.wait_for_timeout(
+            200 if config.haruka_dynamic_font_source == "remote" else 50
+        )
+
+        # 判断字体是否加载完成
+        need_wait = ["imageComplete", "fontsLoaded"]
+        await asyncio.gather(*[page.wait_for_function(f"{i}()") for i in need_wait])
+
+        card = await page.query_selector(
+            ".opus-modules" if "opus" in page.url else ".dyn-card"
+        )
         assert card
         clip = await card.bounding_box()
         assert clip
@@ -164,7 +187,8 @@ async def check_playwright_env():
             await p.chromium.launch()
     except Exception:
         raise ImportError(
-            "加载失败，Playwright 依赖不全，" "解决方法：https://haruka-bot.sk415.icu/faq.html#playwright-依赖不全"
+            "加载失败，Playwright 依赖不全，"
+            "解决方法：https://haruka-bot.sk415.icu/faq.html#playwright-依赖不全"
         )
 
 
