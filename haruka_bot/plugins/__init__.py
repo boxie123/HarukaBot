@@ -1,6 +1,14 @@
 from . import auto_agree  # noqa: F401
 from . import auto_delete  # noqa: F401
 from . import help  # noqa: F401
+from .date import (  # noqa: F401
+    special_date_add,
+    special_date_answer,
+    special_date_delete,
+    special_date_off,
+    special_date_on,
+    special_date_pusher,
+)
 from .at import at_off, at_on  # noqa: F401
 from .dynamic import dynamic_off, dynamic_on  # noqa: F401
 from .live import live_off, live_on  # noqa: F401
