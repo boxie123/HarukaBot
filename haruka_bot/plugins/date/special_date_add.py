@@ -1,11 +1,10 @@
-from nonebot import on_command
 from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, ArgPlainText
 from nonebot.rule import to_me
 
 from ...database import DB as db
-from ...utils import permission_check
+from ...utils import permission_check, on_command
 
 special_date_add = on_command("添加特殊日期", rule=to_me(), priority=5)
 special_date_add.__doc__ = """添加特殊日期 name month day"""

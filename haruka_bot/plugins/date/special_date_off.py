@@ -1,8 +1,7 @@
-from nonebot import on_command
 from nonebot.adapters.onebot.v11.event import MessageEvent
 
 from ...database import DB as db
-from ...utils import get_type_id, permission_check, to_me
+from ...utils import get_type_id, permission_check, to_me, on_command
 
 special_date_off = on_command("关闭节假日提醒", rule=to_me(), priority=5)
 special_date_off.__doc__ = """关闭节假日提醒"""
