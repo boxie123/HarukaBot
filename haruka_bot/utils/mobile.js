@@ -81,22 +81,33 @@ async function getMobileStyle() {
     const imageItemDoms = document.querySelectorAll(".bm-pics-block__item");
 
     // 异步遍历图片 dom
-    Array.from(imageItemDoms).map(async (item) => {
-        // // 获取屏幕比例的 90% 宽度
-        // const clientWidth = window.innerWidth * 0.9;
-        // // 先把默认 margin 置为 0
-        // item.style.margin = "0";
-        // // 宽度默认撑满屏幕宽度 90%;
-        // item.style.width = `${clientWidth}px`;
-        // 获取原app中图片的src
-        const imgSrc = item.firstChild.src;
-        // 判断是否有 @ 符
-        const imgSrcAtIndex = imgSrc.indexOf("@");
-        // 将所有图片转换为 .webp 格式节省加载速度, 并返回给原来的 image 标签
-        item.firstChild.src = imgSrcAtIndex !== -1 ? imgSrc.slice(0, imgSrcAtIndex + 1) + ".webp" : imgSrc;
-        // // 设置自动高度
-        // item.style.height = "auto";
-    })
+    if (imageItemDoms.length > 2) {
+        Array.from(imageItemDoms).map(async (item) => {
+            // 获取原app中图片的src
+            const imgSrc = item.firstChild.src;
+            // 判断是否有 @ 符
+            const imgSrcAtIndex = imgSrc.indexOf("@");
+            // 将所有图片转换为 .webp 格式节省加载速度, 转换为头图, 并返回给原来的 image 标签
+            item.firstChild.src = imgSrcAtIndex !== -1 ? imgSrc.slice(0, imgSrcAtIndex + 1) + "360w_360h_!header.webp" : imgSrc;
+        });
+    } else {
+        Array.from(imageItemDoms).map(async (item) => {
+            // 获取屏幕比例的 90% 宽度
+            const clientWidth = window.innerWidth * 0.9;
+            // 先把默认 margin 置为 0
+            item.style.margin = "0";
+            // 宽度默认撑满屏幕宽度 90%;
+            item.style.width = `${clientWidth}px`;
+            // 获取原app中图片的src
+            const imgSrc = item.firstChild.src;
+            // 判断是否有 @ 符
+            const imgSrcAtIndex = imgSrc.indexOf("@");
+            // 将所有图片转换为 .webp 格式节省加载速度, 并返回给原来的 image 标签
+            item.firstChild.src = imgSrcAtIndex !== -1 ? imgSrc.slice(0, imgSrcAtIndex + 1) + ".webp" : imgSrc;
+            // // 设置自动高度
+            item.style.height = "auto";
+        });
+    }
 }
 
 
