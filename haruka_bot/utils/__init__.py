@@ -52,7 +52,7 @@ async def uid_check(
     uid: str = ArgPlainText("uid"),
 ):
     uid = uid.strip()
-    if uid not in ["1485569", "35192025", "1785821491"]:
+    if uid not in config.haruka_permission_uid:
         await matcher.finish("baka, 只许关注鸽宝")
     matcher.set_arg("uid", Message(uid))
 
