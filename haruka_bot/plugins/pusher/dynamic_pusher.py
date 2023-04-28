@@ -73,6 +73,9 @@ async def dy_sched():
             if image is None:
                 logger.debug(f"动态不存在，已跳过：{url}")
                 return
+            elif dynamic.card_type == 18:
+                logger.debug(f"直播推荐动态，已跳过：{url}")
+                return
 
             type_msg = {
                 0: "发布了新动态",
@@ -92,6 +95,12 @@ async def dy_sched():
                 + MessageSegment.image(image)
                 + f"\n{url}"
             )
+
+            if uid == 1785821491:
+                message = (
+                    f"{name}{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
+                    + MessageSegment.image(image)
+                )
 
             push_list = await db.get_push_list(uid, "dynamic")
             for sets in push_list:
