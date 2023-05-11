@@ -42,7 +42,7 @@ async def get_dynamic_screenshot(dynamic_id, style=config.haruka_screenshot_styl
 
 async def get_dynamic_screenshot_mobile(dynamic_id):
     """移动端动态截图"""
-    url = f"https://m.bilibili.com/dynamic/{dynamic_id}"
+    url = f"https://m.bilibili.com/opus/{dynamic_id}"
     browser = await get_browser()
     page = await browser.new_page(
         device_scale_factor=2,
@@ -73,6 +73,11 @@ async def get_dynamic_screenshot_mobile(dynamic_id):
         #     "dyn.style.fontFamily='站酷快乐体2016修订版, Noto Sans CJK SC, sans-serif';"
         #     "dyn.style.overflowWrap='break-word'"
         # )
+
+        # 判断是否存在验证码窗口
+        geetest = await page.query_selector(".geetest_panel")
+        assert not geetest
+
         await page.add_script_tag(path=mobile_js)
 
         await page.evaluate(
@@ -101,6 +106,9 @@ async def get_dynamic_screenshot_mobile(dynamic_id):
         clip = await card.bounding_box()
         assert clip
         return await page.screenshot(clip=clip, full_page=True)
+    except AssertionError:
+        logger.exception(f"截取动态时发生错误：{url}")
+        return None
     except Exception:
         logger.exception(f"截取动态时发生错误：{url}")
         return await page.screenshot(full_page=True)
