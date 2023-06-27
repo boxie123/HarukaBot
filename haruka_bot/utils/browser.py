@@ -42,13 +42,13 @@ async def get_dynamic_screenshot(dynamic_id, style=config.haruka_screenshot_styl
 
 async def get_dynamic_screenshot_mobile(dynamic_id):
     """移动端动态截图"""
-    url = f"https://m.bilibili.com/opus/{dynamic_id}"
+    url = f"https://m.bilibili.com/dynamic/{dynamic_id}"
     browser = await get_browser()
     page = await browser.new_page(
         device_scale_factor=2,
         user_agent=(
             "Mozilla/5.0 (Linux; Android 10; RMX1911) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36"
+            "(KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
         ),
         viewport={"width": 460, "height": 780},
     )
@@ -75,8 +75,9 @@ async def get_dynamic_screenshot_mobile(dynamic_id):
         # )
 
         # 判断是否存在验证码窗口
-        geetest = await page.query_selector(".geetest_panel")
-        assert not geetest
+        if await page.query_selector(".geetest_panel"):
+            logger.info(f"验证码弹窗，将在下次轮询中重试：{url}")
+            return None
 
         await page.add_script_tag(path=mobile_js)
 
@@ -141,6 +142,10 @@ async def get_dynamic_screenshot_pc(dynamic_id):
         )
         # 动态被删除或者进审核了
         if page.url == "https://www.bilibili.com/404":
+            return None
+        # 判断是否存在验证码窗口
+        if await page.query_selector(".geetest_panel"):
+            logger.warning(f"验证码弹窗，将在下次轮询中重试：{url}")
             return None
         card = await page.query_selector(".card")
         assert card

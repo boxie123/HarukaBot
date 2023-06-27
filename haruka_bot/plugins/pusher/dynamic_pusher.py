@@ -68,14 +68,14 @@ async def dy_sched():
         dynamic_id = int(dynamic.extend.dyn_id_str)
         if dynamic.card_type == 18:
             logger.debug(f"直播推荐动态，已跳过：{dynamic_id}")
-            return
+            continue
         if (dynamic_id not in offset[uid]) and (dynamic_id > offset[uid][1]):  # 和记录中第二旧的动态比较，排除置顶变动影响
             logger.info(f"检测到新动态（{dynamic_id}）：{name}（{uid}）")
             url = f"https://www.bilibili.com/opus/{dynamic_id}"
             image = await get_dynamic_screenshot(dynamic_id)
             if image is None:
                 logger.debug(f"截取动态时发生错误或动态不存在：{url}")
-                return
+                continue
 
             type_msg = {
                 0: "发布了新动态",

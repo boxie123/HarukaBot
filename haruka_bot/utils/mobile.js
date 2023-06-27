@@ -81,7 +81,7 @@ async function getMobileStyle() {
     const imageItemDoms = document.querySelectorAll(".bm-pics-block__item");
 
     // 异步遍历图片 dom
-    if (imageItemDoms.length > 2) {
+    if (imageItemDoms.length > 3) {
         Array.from(imageItemDoms).map(async (item) => {
             // 获取原app中图片的src
             const imgSrc = item.firstChild.src;

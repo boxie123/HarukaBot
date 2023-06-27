@@ -39,10 +39,7 @@ async def _(event: MessageEvent, uid: str = ArgPlainText("uid")):
             elif e.code == -412:
                 await add_sub.finish("操作过于频繁IP暂时被风控，请半小时后再尝试")
             else:
-                await add_sub.finish(
-                    f"未知错误，请联系开发者反馈，错误内容：\n\
-                                    {str(e)}"
-                )
+                name = str(uid)
 
     if isinstance(event, GuildMessageEvent):
         await db.add_guild(
