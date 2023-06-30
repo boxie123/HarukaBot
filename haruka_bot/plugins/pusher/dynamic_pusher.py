@@ -43,7 +43,7 @@ async def dy_sched():
         ).list
     except AioRpcError as e:
         if e.code() == StatusCode.DEADLINE_EXCEEDED:
-            logger.error("爬取动态超时，将在下个轮询中重试")
+            logger.error(f"爬取动态超时，将在下个轮询中重试：{e.code()} {e.details()}")
             return
         raise
 
@@ -68,15 +68,22 @@ async def dy_sched():
     dynamic = None
     for dynamic in dynamics:
         dynamic_id = int(dynamic.extend.dyn_id_str)
-        if dynamic.card_type == 18:
-            logger.debug(f"直播推荐动态，已跳过：{dynamic_id}")
-            continue
+
         if (dynamic_id not in offset[uid]) and (dynamic_id > offset[uid][1]):  # 和记录中第二旧的动态比较，排除置顶变动影响
             logger.info(f"检测到新动态（{dynamic_id}）：{name}（{uid}）")
-            url = f"https://www.bilibili.com/opus/{dynamic_id}"
-            image = await get_dynamic_screenshot(dynamic_id)
+            image, err = await get_dynamic_screenshot(dynamic_id)
+            url = f"https://t.bilibili.com/{dynamic_id}"
             if image is None:
-                logger.debug(f"截取动态时发生错误或动态不存在：{url}")
+                logger.debug(f"动态不存在，已跳过：{url}")
+                continue
+            elif dynamic.card_type in [
+                DynamicType.live_rcmd,
+                DynamicType.live,
+                DynamicType.ad,
+                DynamicType.banner,
+            ]:
+                logger.debug(f"无需推送的动态 {dynamic.card_type}，已跳过：{url}")
+                offset[uid].append(dynamic_id)
                 continue
 
             type_msg = {
@@ -94,8 +101,8 @@ async def dy_sched():
                 aige_name = name
             message = (
                 f"{aige_name}{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
-                + MessageSegment.image(image)
-                + f"\n{url}"
+                f"{f'动态图片可能截图异常：{err}' if err else ''}\n"
+                f"{MessageSegment.image(image)}\n{url}"
             )
 
             if uid == 1785821491:
@@ -137,10 +144,7 @@ def dynamic_lisener(event):
 if plugin_config.haruka_dynamic_interval == 0:
     scheduler.add_listener(
         dynamic_lisener,
-        EVENT_JOB_EXECUTED
-        | EVENT_JOB_ERROR
-        | EVENT_JOB_MISSED
-        | EVENT_SCHEDULER_STARTED,
+        EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_MISSED | EVENT_SCHEDULER_STARTED,
     )
 else:
     scheduler.add_job(
