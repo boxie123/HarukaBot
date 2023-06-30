@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from bilireq.live import get_rooms_info_by_uids
 from nonebot.adapters.onebot.v11.message import MessageSegment
 from nonebot.log import logger
@@ -54,7 +56,7 @@ async def live_sched():
             logger.info(f"检测到下播：{name}（{uid}）")
             if not plugin_config.haruka_live_off_notify:  # 没开下播推送
                 continue
-            bixin_path = "C:/hbbot/bot/17.png"
+            bixin_path = str(Path("./17.png").resolve())
             live_msg = (
                 f"{aige_name}下锅啦\n" + MessageSegment.image(f"file:///{bixin_path}")
             )
