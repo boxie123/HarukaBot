@@ -54,7 +54,7 @@ async def live_sched():
             room_area = f"{area_parent} / {area}"
             logger.info(f"检测到开播：{name}（{uid}）")
             live_msg = (
-                f"{aige_name} 开播啦！\n分区：{room_area}\n标题：{title}\n"
+                f"{aige_name}开播啦！\n{title}\n"
                 + MessageSegment.image(cover)
                 + f"\n{url}"
             )
@@ -63,9 +63,9 @@ async def live_sched():
             if not plugin_config.haruka_live_off_notify:  # 没开下播推送
                 continue
             live_time_msg = (
-                f"\n本次直播时长 {calc_time_total(time.time() - live_time[uid])}。"
+                f"\n本次直播时长 {calc_time_total(time.time() - live_time[uid])}"
                 if live_time.get(uid)
-                else "。"
+                else ""
             )
             bixin_path = str(Path("./17.png").resolve())
             live_msg = (
