@@ -81,12 +81,12 @@ async def dy_sched():
 
             type_msg = {
                 0: "发布了新动态",
-                DynamicType.forward: "转发了一条动态",
-                DynamicType.word: "发布了新文字动态",
-                DynamicType.draw: "发布了新图文动态",
-                DynamicType.av: "发布了新投稿",
-                DynamicType.article: "发布了新专栏",
-                DynamicType.music: "发布了新音频",
+                "DYNAMIC_TYPE_FORWARD": "转发了一条动态",
+                "DYNAMIC_TYPE_WORD": "发布了新文字动态",
+                "DYNAMIC_TYPE_DRAW": "发布了新图文动态",
+                "DYNAMIC_TYPE_AV": "发布了新投稿",
+                "DYNAMIC_TYPE_ARTICLE": "发布了新专栏",
+                "DYNAMIC_TYPE_MUSIC": "发布了新音频",
             }
             if name == "艾鸽泰尔德":
                 aige_name = "鸽宝"
