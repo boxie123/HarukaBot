@@ -10,9 +10,6 @@ from nonebot.log import logger
 from aunly_captcha_solver import CaptchaInfer
 from playwright.__main__ import main
 from playwright.async_api import BrowserContext, async_playwright, Page
-from bilireq.utils import get, DEFAULT_HEADERS
-from dynrender_skia.Core import DynRender
-from dynamicadaptor.DynamicConversion import formate_message
 
 from ..config import plugin_config
 from .fonts_provider import fill_font
@@ -71,65 +68,47 @@ async def get_dynamic_screenshot(dynamic_id, style=plugin_config.haruka_screensh
     """获取动态截图"""
     image: Optional[bytes] = None
     err = ""
-    if style == "local":
-        return (await get_dynamic_screenshot_local(dynamic_id), err)
-    else:
-        for i in range(3):
-            browser = await get_browser()
-            page = await browser.new_page()
-            try:
-                # if style.lower() == "mobile":
-                #     page, clip = await get_dynamic_screenshot_mobile(dynamic_id, page)
-                # else:
-                #     page, clip = await get_dynamic_screenshot_pc(dynamic_id, page)
-                page, clip = await get_dynamic_screenshot_mobile(dynamic_id, page)
-                clip["height"] = min(clip["height"], 32766)
-                return (
-                    await page.screenshot(clip=clip, full_page=True, type="jpeg", quality=98),
-                    None,
-                )
-            except TimeoutError:
-                logger.warning(f"截图超时，重试 {i + 1}/3")
-                err = "截图超时"
-            except Notfound:
+    for i in range(3):
+        browser = await get_browser()
+        page = await browser.new_page()
+        try:
+            # if style.lower() == "mobile":
+            #     page, clip = await get_dynamic_screenshot_mobile(dynamic_id, page)
+            # else:
+            #     page, clip = await get_dynamic_screenshot_pc(dynamic_id, page)
+            page, clip = await get_dynamic_screenshot_mobile(dynamic_id, page)
+            clip["height"] = min(clip["height"], 32766)
+            return (
+                await page.screenshot(clip=clip, full_page=True, type="jpeg", quality=98),
+                None,
+            )
+        except TimeoutError:
+            logger.warning(f"截图超时，重试 {i + 1}/3")
+            err = "截图超时"
+        except Notfound:
+            logger.error(f"动态 {dynamic_id} 不存在")
+            err = "动态不存在"
+        except AssertionError:
+            logger.error(f"动态 {dynamic_id} 截图失败")
+            err = "网页元素获取失败"
+            image = await page.screenshot(full_page=True, type="jpeg", quality=80)
+        except Exception as e:
+            if "bilibili.com/404" in page.url:
                 logger.error(f"动态 {dynamic_id} 不存在")
                 err = "动态不存在"
-            except AssertionError:
-                logger.error(f"动态 {dynamic_id} 截图失败")
-                err = "网页元素获取失败"
-                image = await page.screenshot(full_page=True, type="jpeg", quality=80)
-            except Exception as e:
-                if "bilibili.com/404" in page.url:
-                    logger.error(f"动态 {dynamic_id} 不存在")
-                    err = "动态不存在"
-                    break
-                elif "waiting until" in str(e):
-                    logger.error(f"动态 {dynamic_id} 截图超时")
-                    err = "截图超时"
-                else:
-                    logger.exception(f"动态 {dynamic_id} 截图失败")
-                    err = "截图失败"
-                    with contextlib.suppress(Exception):
-                        image = await page.screenshot(full_page=True, type="jpeg", quality=80)
-            finally:
+                break
+            elif "waiting until" in str(e):
+                logger.error(f"动态 {dynamic_id} 截图超时")
+                err = "截图超时"
+            else:
+                logger.exception(f"动态 {dynamic_id} 截图失败")
+                err = "截图失败"
                 with contextlib.suppress(Exception):
-                    await page.close()
-        return image, err
-    
-
-async def get_dynamic_screenshot_local(dynamic_id):
-    """本地渲染动态截图"""
-    url = f"https://api.bilibili.com/x/polymer/web-dynamic/v1/detail?timezone_offset=-480&id={dynamic_id}&features=itemOpusStyle"
-    headers = {
-        "referer": f"https://t.bilibili.com/{dynamic_id}",
-        "user-agent": plugin_config.haruka_browser_ua,
-        "Cookie": plugin_config.haruka_browser_cookie,
-    }
-    message = await get(url, headers={**DEFAULT_HEADERS, **headers})
-
-    message_formate = await formate_message("web", message["item"])
-    img = await DynRender(font_family=plugin_config.haruka_dynamic_font).run(message_formate)
-    return img.tobytes()
+                    image = await page.screenshot(full_page=True, type="jpeg", quality=80)
+        finally:
+            with contextlib.suppress(Exception):
+                await page.close()
+    return image, err
 
 
 async def get_dynamic_screenshot_mobile(dynamic_id, page: Page):
