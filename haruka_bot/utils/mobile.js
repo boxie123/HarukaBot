@@ -134,8 +134,8 @@ async function getMobileStyle(useImageBig = false) {
                 const imgSrcAtIndex = imgSrc.indexOf("@");
                 // 获取图片比例
                 const ratio = await getImageRatio(item.firstChild.src);
-                // 如果比例大于 2 即为长图, 则获取 header 图
-                item.firstChild.src = ratio > 2 ? imgSrc.slice(0, imgSrcAtIndex + 1) + "260w_260h_!header.webp" : imgSrc.slice(0, imgSrcAtIndex + 1) + "260w_260h_1e_1c.webp";
+                // 如果比例大于 3 即为长图, 则获取 header 图
+                item.firstChild.src = ratio > 3 ? imgSrc.slice(0, imgSrcAtIndex + 1) + "260w_260h_!header.webp" : imgSrc.slice(0, imgSrcAtIndex + 1) + "260w_260h_1e_1c.webp";
             });
         }
     })
