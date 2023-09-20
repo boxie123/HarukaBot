@@ -36,12 +36,6 @@ class Config(BaseSettings):
         """定时器为负返回默认值"""
         return field.default if v < 1 else v
 
-    @validator("haruka_screenshot_style")
-    def screenshot_style(cls, v: str):
-        if v != "mobile":
-            logger.warning("截图样式目前只支持 mobile，pc 样式现已被弃用")
-        return "mobile"
-
     class Config:
         extra = "ignore"
 
