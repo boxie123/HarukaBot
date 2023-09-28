@@ -1,11 +1,13 @@
 import asyncio
 import contextlib
+from io import BytesIO
 import os
 import re
 import sys
 from pathlib import Path
 from typing import Optional
 
+import skia
 from nonebot.log import logger
 from aunly_captcha_solver import CaptchaInfer
 from playwright.__main__ import main
@@ -97,7 +99,7 @@ async def get_dynamic_screenshot(dynamic_id, style=plugin_config.haruka_screensh
             except AssertionError:
                 logger.error(f"动态 {dynamic_id} 截图失败")
                 err = "网页元素获取失败"
-                image = await page.screenshot(full_page=True, type="jpeg", quality=80)
+                image = await get_dynamic_screenshot_local(dynamic_id)
             except Exception as e:
                 if "bilibili.com/404" in page.url:
                     logger.error(f"动态 {dynamic_id} 不存在")
@@ -110,14 +112,14 @@ async def get_dynamic_screenshot(dynamic_id, style=plugin_config.haruka_screensh
                     logger.exception(f"动态 {dynamic_id} 截图失败")
                     err = "截图失败"
                     with contextlib.suppress(Exception):
-                        image = await page.screenshot(full_page=True, type="jpeg", quality=80)
+                        image = await get_dynamic_screenshot_local(dynamic_id)
             finally:
                 with contextlib.suppress(Exception):
                     await page.close()
         return image, err
     
 
-async def get_dynamic_screenshot_local(dynamic_id):
+async def get_dynamic_screenshot_local(dynamic_id) -> bytes:
     """本地渲染动态截图"""
     url = f"https://api.bilibili.com/x/polymer/web-dynamic/v1/detail?timezone_offset=-480&id={dynamic_id}&features=itemOpusStyle"
     headers = {
@@ -129,7 +131,10 @@ async def get_dynamic_screenshot_local(dynamic_id):
 
     message_formate = await formate_message("web", message["item"])
     img = await DynRender(font_family=plugin_config.haruka_dynamic_font).run(message_formate)
-    return img.tobytes()
+    img = skia.Image.fromarray(img, colorType=skia.ColorType.kRGBA_8888_ColorType)
+    bytes_io = BytesIO()
+    img.save(bytes_io)
+    return bytes_io.getvalue()
 
 
 async def get_dynamic_screenshot_mobile(dynamic_id, page: Page):
