@@ -325,3 +325,4 @@ from nonebot_plugin_apscheduler import scheduler  # noqa
 
 from .browser import get_dynamic_screenshot  # noqa
 from .special_date_get import get_special_date   # noqa
+from .get_dynamic_list import get_user_dynamics  # noqa

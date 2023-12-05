@@ -7,18 +7,13 @@ from apscheduler.events import (
     EVENT_JOB_MISSED,
     EVENT_SCHEDULER_STARTED,
 )
-from bilireq.exceptions import GrpcError
-from bilireq.grpc.dynamic import grpc_get_user_dynamics
-from bilireq.grpc.protos.bilibili.app.dynamic.v2.dynamic_pb2 import DynamicType
-from grpc import StatusCode
-from grpc.aio import AioRpcError
 from nonebot.adapters.onebot.v11.message import MessageSegment
 from nonebot.log import logger
 
 from ...config import plugin_config
 from ...database import DB as db
 from ...database import dynamic_offset as offset
-from ...utils import get_dynamic_screenshot, safe_send, scheduler
+from ...utils import get_dynamic_screenshot, safe_send, scheduler, get_user_dynamics
 
 
 async def dy_sched():
@@ -33,46 +28,38 @@ async def dy_sched():
     name = user.name
 
     logger.debug(f"爬取动态 {name}（{uid}）")
-    try:
-        # 获取 UP 最新动态列表
-        dynamics = (
-            await grpc_get_user_dynamics(
-                uid,
-                timeout=plugin_config.haruka_dynamic_timeout,
-                proxy=plugin_config.haruka_proxy,
-            )
-        ).list
-    except AioRpcError as e:
-        if e.code() == StatusCode.DEADLINE_EXCEEDED:
-            logger.error(f"爬取动态超时，将在下个轮询中重试：{e.code()} {e.details()}")
-        else:
-            logger.error(f"爬取动态失败：{e.code()} {e.details()}")
-        return
-    except GrpcError as e:
-        logger.error(f"爬取动态失败：{e.code} {e.msg}")
-        return
+    # 获取 UP 最新动态列表
+    dynamics: list = (
+        await get_user_dynamics(
+            uid,
+            cookie=plugin_config.haruka_browser_cookie,
+            ua=plugin_config.haruka_browser_ua,
+            timeout=plugin_config.haruka_dynamic_timeout,
+            proxy=plugin_config.haruka_proxy,
+        )
+    )["items"]
 
     if not dynamics:  # 没发过动态
         if uid in offset and offset[uid] == [-1, ]:  # 不记录会导致第一次发动态不推送
             offset[uid].append(0)
         return
     # 更新昵称
-    name = dynamics[0].modules[0].module_author.author.name
+    name = dynamics[0]["modules"]["module_author"]["name"]
 
-    dynamics.sort(key=lambda x: int(x.extend.dyn_id_str))  # 动态从旧到新排列
+    dynamics.sort(key=lambda x: int(x["id_str"]))  # 动态从旧到新排列
 
     if uid not in offset:  # 已删除
         return
     elif offset[uid] == [-1, ]:  # 第一次爬取
         if len(dynamics) == 1:  # 只有一条动态
-            offset[uid].append(int(dynamics[0].extend.dyn_id_str))
+            offset[uid].append(int(dynamics[0]["id_str"]))
         else:
-            offset[uid] = [int(x.extend.dyn_id_str) for x in dynamics]  # 记录前12条动态id
+            offset[uid] = [int(x["id_str"]) for x in dynamics]  # 记录前12条动态id
         return
 
     dynamic = None
     for dynamic in dynamics:
-        dynamic_id = int(dynamic.extend.dyn_id_str)
+        dynamic_id = int(dynamic["id_str"])
 
         if (dynamic_id not in offset[uid]) and (dynamic_id > offset[uid][1]):  # 和记录中第二旧的动态比较，排除置顶变动影响
             logger.info(f"检测到新动态（{dynamic_id}）：{name}（{uid}）")
@@ -81,41 +68,35 @@ async def dy_sched():
             if image is None:
                 logger.debug(f"动态不存在，已跳过：{url}")
                 continue
-            elif dynamic.card_type in [
-                DynamicType.live_rcmd,
-                DynamicType.live,
-                DynamicType.ad,
-                DynamicType.banner,
+            elif dynamic["type"] in [
+                "DYNAMIC_TYPE_LIVE_RCMD",
+                "DYNAMIC_TYPE_LIVE",
+                "DYNAMIC_TYPE_AD",
+                "DYNAMIC_TYPE_BANNER",
             ]:
-                logger.debug(f"无需推送的动态 {dynamic.card_type}，已跳过：{url}")
+                logger.debug(f"无需推送的动态 {dynamic['type']}，已跳过：{url}")
                 offset[uid].append(dynamic_id)
                 continue
 
             type_msg = {
                 0: "发布了新动态",
-                DynamicType.forward: "转发了一条动态",
-                DynamicType.word: "发布了新文字动态",
-                DynamicType.draw: "发布了新图文动态",
-                DynamicType.av: "发布了新投稿",
-                DynamicType.article: "发布了新专栏",
-                DynamicType.music: "发布了新音频",
+                "DYNAMIC_TYPE_FORWARD": "转发了一条动态",
+                "DYNAMIC_TYPE_WORD": "发布了新文字动态",
+                "DYNAMIC_TYPE_DRAW": "发布了新图文动态",
+                "DYNAMIC_TYPE_AV": "发布了新投稿",
+                "DYNAMIC_TYPE_ARTICLE": "发布了新专栏",
+                "DYNAMIC_TYPE_MUSIC": "发布了新音频",
             }
             if name == "艾鸽泰尔德":
                 aige_name = "鸽宝"
             else:
                 aige_name = name
             message = (
-                f"{name} {type_msg.get(dynamic.card_type, type_msg[0])}：\n"
+                f"{aige_name} {type_msg.get(dynamic['type'], type_msg[0])}：\n"
                 + str(f"动态图片可能截图异常：{err}\n" if err else "")
                 + MessageSegment.image(image)
                 + f"\n{url}"
             )
-
-            if uid == 1785821491:
-                message = (
-                    f"{name}{type_msg.get(dynamic.card_type, type_msg[0])}：\n"
-                    + MessageSegment.image(image)
-                )
 
             push_list = await db.get_push_list(uid, "dynamic")
             for sets in push_list:
