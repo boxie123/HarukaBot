@@ -1,5 +1,6 @@
 from . import auto_agree  # noqa: F401
 from . import auto_delete  # noqa: F401
+from . import suit_dlc_sale  # noqa: F401
 from . import help  # noqa: F401
 from .date import (  # noqa: F401
     special_date_add,
